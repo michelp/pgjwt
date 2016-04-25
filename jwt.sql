@@ -4,7 +4,7 @@ CREATE SCHEMA jwt;
 
 
 CREATE OR REPLACE FUNCTION jwt.url_encode(data bytea) RETURNS text LANGUAGE sql AS $$
-    SELECT translate(encode(data, 'base64'), '+/=', '-_');
+    SELECT translate(encode(data, 'base64'), E'+/=\n', '-_');
 $$;
 
 
