@@ -12,15 +12,14 @@ Note that this file will DROP and CREATE a new schema called 'jwt'.
 Usage
 -----
 
-To create a token, call jwt.sign:
+Create a token:
 
     => select jwt.sign('{"sub":"1234567890","name":"John Doe","admin":true}', 'secret');
                                                                             encode
     -------------------------------------------------------------------------------------------------------------------------------------------------------
      eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWV9.TJVA95OrM7E2cBab30RMHrHDcEfxjoYZgeFONFh7HgQ
 
-Decoding a token will return its, header, payload, and a boolean
-indicating that the signature is valid:
+Verify a token:
 
     => select * from jwt.verify('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWV9.TJVA95OrM7E2cBab30RMHrHDcEfxjoYZgeFONFh7HgQ', 'secret');
                header            |                       payload                       | valid
