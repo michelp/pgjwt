@@ -28,9 +28,10 @@ WITH
       WHEN algorithm = 'HS256' THEN 'sha256'
       WHEN algorithm = 'HS384' THEN 'sha384'
       WHEN algorithm = 'HS512' THEN 'sha512'
-      ELSE '' END)  -- throws error
-SELECT jwt.url_encode(hmac(signables, secret, (select * from alg)));
+      ELSE '' END)  -- hmac throws error
+SELECT jwt.url_encode(hmac(signables, secret, (select * FROM alg)));
 $$;
+
 
 CREATE OR REPLACE FUNCTION jwt.sign(payload json, secret text, algorithm text DEFAULT 'HS256')
 RETURNS text LANGUAGE sql AS $$
@@ -53,9 +54,10 @@ $$;
 
 CREATE OR REPLACE FUNCTION jwt.verify(token text, secret text, algorithm text DEFAULT 'HS256')
 RETURNS table(header json, payload json, valid boolean) LANGUAGE sql AS $$
-  SELECT convert_from(jwt.url_decode(r[1]), 'utf8')::json as header,
-    convert_from(jwt.url_decode(r[2]), 'utf8')::json as payload,
-    r[3] = jwt.algorithm_sign(r[1] || '.' || r[2], secret, algorithm) as valid
+  SELECT
+    convert_from(jwt.url_decode(r[1]), 'utf8')::json AS header,
+    convert_from(jwt.url_decode(r[2]), 'utf8')::json AS payload,
+    r[3] = jwt.algorithm_sign(r[1] || '.' || r[2], secret, algorithm) AS valid
   FROM regexp_split_to_array(token, '\.') r;
 $$;
 COMMIT;
