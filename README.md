@@ -12,7 +12,7 @@ Note that this file will DROP and CREATE a new schema called 'jwt'.
 Usage
 -----
 
-To create a token, call jwt.sign('{...json...}', '<secret key>'):
+To create a token, call jwt.sign:
 
     => select jwt.sign('{"sub":"1234567890","name":"John Doe","admin":true}', 'secret');
                                                                             encode
