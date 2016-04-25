@@ -14,6 +14,12 @@ WITH t AS (SELECT translate(data, '-_', '+/')),
          || CASE WHEN (select * from rem) > 0 THEN repeat('=', (4 - (select * from rem))) ELSE '' END, 'base64');
 $$;
 
+
+CREATE OR REPLACE FUNCTION jwt.sign(data text, secret text, algorithm text DEFAULT 'sha256')
+RETURNS text LANGUAGE sql AS $$
+SELECT jwt.url_encode(hmac(data, secret, algorithm));
+$$;
+
 CREATE OR REPLACE FUNCTION jwt.encode(payload json, secret text, algorithm text DEFAULT 'sha256')
 RETURNS text LANGUAGE sql AS $$
 WITH header AS (SELECT jwt.url_encode(convert_to('{"alg":"HS256","typ":"JWT"}', 'utf8'))),
@@ -22,12 +28,15 @@ WITH header AS (SELECT jwt.url_encode(convert_to('{"alg":"HS256","typ":"JWT"}', 
 SELECT
     (SELECT * FROM signables)
     || '.' ||
-    jwt.url_encode(hmac((SELECT * FROM signables), secret, algorithm));
+    jwt.sign((SELECT * FROM signables), secret, algorithm);
 $$;
 
-CREATE OR REPLACE FUNCTION jwt.verify(token text, secret text, algorithm text DEFAULT 'sha256')
-RETURNS table(header json, payload json, verified boolean) LANGUAGE sql AS $$
-    SELECT '{}'::json, '{}'::json, true;
+CREATE OR REPLACE FUNCTION jwt.decode(token text, secret text, algorithm text DEFAULT 'sha256')
+RETURNS table(header json, payload json, valid boolean) LANGUAGE sql AS $$
+    SELECT convert_from(jwt.url_decode(r[1]), 'utf8')::json as header,
+           convert_from(jwt.url_decode(r[2]), 'utf8')::json as payload,
+           (r[3] = jwt.sign(r[1] || '.' || r[2], secret, algorithm)) as valid
+    FROM regexp_split_to_array(token, '\.') r;
 $$;
 
 COMMIT;
