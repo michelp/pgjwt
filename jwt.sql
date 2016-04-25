@@ -38,7 +38,7 @@ CREATE OR REPLACE FUNCTION jwt.verify(token text, secret text, algorithm text DE
 RETURNS table(header json, payload json, valid boolean) LANGUAGE sql AS $$
     SELECT convert_from(jwt.url_decode(r[1]), 'utf8')::json as header,
            convert_from(jwt.url_decode(r[2]), 'utf8')::json as payload,
-           (r[3] = jwt.sign(r[1] || '.' || r[2], secret, algorithm)) as valid
+           (r[3] = jwt.uhmac(r[1] || '.' || r[2], secret, algorithm)) as valid
     FROM regexp_split_to_array(token, '\.') r;
 $$;
 COMMIT;
