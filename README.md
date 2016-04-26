@@ -1,12 +1,20 @@
 # pgjwt
 PostgreSQL implementation of [JSON Web Tokens](https://jwt.io/)
 
+Dependencies
+------------
+
+This code requires the pgcrypto extension, included in most
+distribution's "postgresql-contrib" package.  The tests require the
+pgtap extension to run.
+
 Install
 -------
 
     'psql -f jwt.sql'
 
 Note that this file will DROP and CREATE a new schema called 'jwt'.
+To run the tests install pgtap and run 'pg_prove test.sql'.
 
 
 Usage

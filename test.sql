@@ -1,6 +1,7 @@
 BEGIN;
 SELECT plan(14);
 
+
 SELECT
   is(jwt.sign('{"sub":"1234567890","name":"John Doe","admin":true}', 'secret'),
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWV9.TJVA95OrM7E2cBab30RMHrHDcEfxjoYZgeFONFh7HgQ');
@@ -31,11 +32,13 @@ SELECT
     'verify() should raise on bogus algorithm'
 );
 
+
 SELECT throws_ok( -- bogus header
     $$SELECT header::text, payload::text, valid FROM jwt.verify(
     'eyJhbGciOiJIUzI1NiIBOGUScCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWV9.TJVA95OrM7E2cBab30RMHrHDcEfxjoYZgeFONFh7HgQ',
     'secret', 'HS256')$$
     );
+
 
 SELECT
   throws_ok( -- bogus payload
@@ -87,6 +90,7 @@ SELECT
     $$VALUES ('{"alg":"HS384","typ":"JWT"}', '{"sub":"1234567890","name":"John Doe","admin":true}', false)$$,
     'verify() should return return data marked invalid'
 );
+
 
 SELECT
   is(jwt.sign('{"sub":"1234567890","name":"John Doe","admin":true}', 'secret', 'HS512'),
