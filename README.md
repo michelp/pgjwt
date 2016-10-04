@@ -43,9 +43,8 @@ sign() and verify() take an optional algorithm argument that can be
     => select sign('{"sub":"1234567890","name":"John Doe","admin":true}', 'secret', 'HS384'),
 
 
-
 ## TODO
 
-* public/private keys
+* public/private keys when pgcrypto gets *_verify() functions
 
 * SET ROLE and key lookup helper functions
