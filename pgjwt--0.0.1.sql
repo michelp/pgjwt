@@ -58,4 +58,3 @@ RETURNS table(header json, payload json, valid boolean) LANGUAGE sql AS $$
     r[3] = algorithm_sign(r[1] || '.' || r[2], secret, algorithm) AS valid
   FROM regexp_split_to_array(token, '\.') r;
 $$;
-COMMIT;
