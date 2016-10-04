@@ -1,4 +1,4 @@
-\echo Use "CREATE EXTENSION base36" to load this file. \quit
+\echo Use "CREATE EXTENSION pgjwt" to load this file. \quit
 
 
 CREATE OR REPLACE FUNCTION url_encode(data bytea) RETURNS text LANGUAGE sql AS $$
