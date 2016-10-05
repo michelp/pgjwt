@@ -1,7 +1,6 @@
 BEGIN;
 SELECT plan(14);
-
-
+    
 SELECT
   is(sign('{"sub":"1234567890","name":"John Doe","admin":true}', 'secret'),
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWV9.TJVA95OrM7E2cBab30RMHrHDcEfxjoYZgeFONFh7HgQ');

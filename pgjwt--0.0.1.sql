@@ -27,7 +27,7 @@ WITH
       WHEN algorithm = 'HS384' THEN 'sha384'
       WHEN algorithm = 'HS512' THEN 'sha512'
       ELSE '' END)  -- hmac throws error
-SELECT url_encode(hmac(signables, secret, (select * FROM alg)));
+SELECT @extschema@.url_encode(hmac(signables, secret, (select * FROM alg)));
 $$;
 
 
@@ -35,10 +35,10 @@ CREATE OR REPLACE FUNCTION sign(payload json, secret text, algorithm text DEFAUL
 RETURNS text LANGUAGE sql AS $$
 WITH
   header AS (
-    SELECT url_encode(convert_to('{"alg":"' || algorithm || '","typ":"JWT"}', 'utf8'))
+    SELECT @extschema@.url_encode(convert_to('{"alg":"' || algorithm || '","typ":"JWT"}', 'utf8'))
     ),
   payload AS (
-    SELECT url_encode(convert_to(payload::text, 'utf8'))
+    SELECT @extschema@.url_encode(convert_to(payload::text, 'utf8'))
     ),
   signables AS (
     SELECT (SELECT * FROM header) || '.' || (SELECT * FROM payload)
@@ -46,15 +46,15 @@ WITH
 SELECT
     (SELECT * FROM signables)
     || '.' ||
-    algorithm_sign((SELECT * FROM signables), secret, algorithm);
+    @extschema@.algorithm_sign((SELECT * FROM signables), secret, algorithm);
 $$;
 
 
 CREATE OR REPLACE FUNCTION verify(token text, secret text, algorithm text DEFAULT 'HS256')
 RETURNS table(header json, payload json, valid boolean) LANGUAGE sql AS $$
   SELECT
-    convert_from(url_decode(r[1]), 'utf8')::json AS header,
-    convert_from(url_decode(r[2]), 'utf8')::json AS payload,
-    r[3] = algorithm_sign(r[1] || '.' || r[2], secret, algorithm) AS valid
+    convert_from(@extschema@.url_decode(r[1]), 'utf8')::json AS header,
+    convert_from(@extschema@.url_decode(r[2]), 'utf8')::json AS payload,
+    r[3] = @extschema@.algorithm_sign(r[1] || '.' || r[2], secret, algorithm) AS valid
   FROM regexp_split_to_array(token, '\.') r;
 $$;
