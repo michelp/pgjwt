@@ -2,3 +2,5 @@
 comment = 'JSON Web Token API for Postgresql'
 default_version = '0.0.1'
 relocatable = true
+requires = pgcrypto
+
