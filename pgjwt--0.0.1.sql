@@ -7,14 +7,14 @@ $$;
 
 
 CREATE OR REPLACE FUNCTION url_decode(data text) RETURNS bytea LANGUAGE sql AS $$
-WITH t AS (SELECT translate(data, '-_', '+/')),
-     rem AS (SELECT length((SELECT * FROM t)) % 4) -- compute padding size
+WITH t AS (SELECT translate(data, '-_', '+/') AS trans),
+     rem AS (SELECT length(t.trans) % 4 AS remainder FROM t) -- compute padding size
     SELECT decode(
-        (SELECT * FROM t) ||
-        CASE WHEN (SELECT * FROM rem) > 0
-           THEN repeat('=', (4 - (SELECT * FROM rem)))
+        t.trans ||
+        CASE WHEN rem.remainder > 0
+           THEN repeat('=', (4 - rem.remainder))
            ELSE '' END,
-    'base64');
+    'base64') FROM t, rem;
 $$;
 
 
@@ -26,8 +26,8 @@ WITH
       WHEN algorithm = 'HS256' THEN 'sha256'
       WHEN algorithm = 'HS384' THEN 'sha384'
       WHEN algorithm = 'HS512' THEN 'sha512'
-      ELSE '' END)  -- hmac throws error
-SELECT @extschema@.url_encode(hmac(signables, secret, (select * FROM alg)));
+      ELSE '' END AS id)  -- hmac throws error
+SELECT @extschema@.url_encode(hmac(signables, secret, alg.id)) FROM alg;
 $$;
 
 
@@ -35,18 +35,17 @@ CREATE OR REPLACE FUNCTION sign(payload json, secret text, algorithm text DEFAUL
 RETURNS text LANGUAGE sql AS $$
 WITH
   header AS (
-    SELECT @extschema@.url_encode(convert_to('{"alg":"' || algorithm || '","typ":"JWT"}', 'utf8'))
+    SELECT @extschema@.url_encode(convert_to('{"alg":"' || algorithm || '","typ":"JWT"}', 'utf8')) AS data
     ),
   payload AS (
-    SELECT @extschema@.url_encode(convert_to(payload::text, 'utf8'))
+    SELECT @extschema@.url_encode(convert_to(payload::text, 'utf8')) AS data
     ),
   signables AS (
-    SELECT (SELECT * FROM header) || '.' || (SELECT * FROM payload)
+    SELECT header.data || '.' || payload.data AS data FROM header, payload
     )
 SELECT
-    (SELECT * FROM signables)
-    || '.' ||
-    @extschema@.algorithm_sign((SELECT * FROM signables), secret, algorithm);
+    signables.data || '.' ||
+    @extschema@.algorithm_sign(signables.data, secret, algorithm) FROM signables;
 $$;
 
 
