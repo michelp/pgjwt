@@ -27,7 +27,7 @@ WITH
       WHEN algorithm = 'HS384' THEN 'sha384'
       WHEN algorithm = 'HS512' THEN 'sha512'
       ELSE '' END AS id)  -- hmac throws error
-SELECT @extschema@.url_encode(hmac(signables, secret, alg.id)) FROM alg;
+SELECT @extschema@.url_encode(@extschema@.hmac(signables, secret, alg.id)) FROM alg;
 $$;
 
 
