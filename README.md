@@ -20,9 +20,11 @@ Clone the repository and then run:
     'make install'
 
 This creates a new extension that can be installed with 'CREATE
-EXTENSION pgjwt;' To run the tests install pgtap and run 'pg_prove
-test.sql'.
+EXTENSION pgjwt;'
 
+To run the tests install pgtap and run 'pg_prove test/test.sql'.
+Another approach is to use the docker based test runner, but running
+'./test.sh'.  This will require you have docker installed.
 
 ## Usage
 
