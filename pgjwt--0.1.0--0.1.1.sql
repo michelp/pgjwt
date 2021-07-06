@@ -3,7 +3,7 @@
 
 CREATE OR REPLACE FUNCTION url_encode(data bytea) RETURNS text LANGUAGE sql AS $$
     SELECT translate(encode(data, 'base64'), E'+/=\n', '-_');
-$$;
+$$ IMMUTABLE;
 
 
 CREATE OR REPLACE FUNCTION url_decode(data text) RETURNS bytea LANGUAGE sql AS $$
@@ -15,7 +15,7 @@ WITH t AS (SELECT translate(data, '-_', '+/') AS trans),
            THEN repeat('=', (4 - rem.remainder))
            ELSE '' END,
     'base64') FROM t, rem;
-$$;
+$$ IMMUTABLE;
 
 
 CREATE OR REPLACE FUNCTION algorithm_sign(signables text, secret text, algorithm text)
@@ -28,7 +28,7 @@ WITH
       WHEN algorithm = 'HS512' THEN 'sha512'
       ELSE '' END AS id)  -- hmac throws error
 SELECT @extschema@.url_encode(@extschema@.hmac(signables, secret, alg.id)) FROM alg;
-$$;
+$$ IMMUTABLE;
 
 
 CREATE OR REPLACE FUNCTION sign(payload json, secret text, algorithm text DEFAULT 'HS256')
@@ -46,7 +46,7 @@ WITH
 SELECT
     signables.data || '.' ||
     @extschema@.algorithm_sign(signables.data, secret, algorithm) FROM signables;
-$$;
+$$ IMMUTABLE;
 
 
 CREATE OR REPLACE FUNCTION verify(token text, secret text, algorithm text DEFAULT 'HS256')
@@ -56,4 +56,4 @@ RETURNS table(header json, payload json, valid boolean) LANGUAGE sql AS $$
     convert_from(@extschema@.url_decode(r[2]), 'utf8')::json AS payload,
     r[3] = @extschema@.algorithm_sign(r[1] || '.' || r[2], secret, algorithm) AS valid
   FROM regexp_split_to_array(token, '\.') r;
-$$;
+$$ IMMUTABLE;
