@@ -1,6 +1,6 @@
 # pgjwt extension
 comment = 'JSON Web Token API for Postgresql'
-default_version = '0.1.0'
+default_version = '0.1.1'
 relocatable = false
 requires = pgcrypto
 superuser = false
