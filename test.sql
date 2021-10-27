@@ -14,7 +14,7 @@ CREATE EXTENSION pgtap;
 CREATE EXTENSION pgjwt;
 
 BEGIN;
-SELECT plan(14);
+SELECT plan(23);
     
 SELECT
   is(sign('{"sub":"1234567890","name":"John Doe","admin":true}', 'secret'),
@@ -128,6 +128,102 @@ SELECT
     'badsecret', 'HS512')$$,
     $$VALUES ('{"alg":"HS512","typ":"JWT"}', '{"sub":"1234567890","name":"John Doe","admin":true}', false)$$,
     'verify() should return return data marked invalid'
+);
+
+
+SELECT
+  results_eq(
+    $$SELECT header::text, payload::text, valid FROM verify(
+    E'eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJuYmYiOiJuby1kb3VibGUifQ.6TDHvMKq3Z67KaexRMuhoQ20sYSj9jConcUCO3g2bGyHXACq-FPkJIRAsy1xX90fWKieIAW_tz-4bbFLwwOTPg',
+    'secret', 'HS512')$$,
+    $$VALUES ('{"alg":"HS512","typ":"JWT"}', '{"nbf":"no-double"}', true)$$,
+    'verify() should ignore a nbf claim with a invalid value'
+);
+
+
+SELECT
+  results_eq(
+    $$SELECT header::text, payload::text, valid FROM verify(
+    E'eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJleHAiOiI3NXoifQ.nfXYiSNNdYNsLrQp5Zry9p0xDCh_CkMSY1dOdqDCLc1YrDxrItwEmZIlTi3BBO8_9OCameSKMyGysYGDCNoaRg',
+    'secret', 'HS512')$$,
+    $$VALUES ('{"alg":"HS512","typ":"JWT"}', '{"exp":"75z"}', true)$$,
+    'verify() should ignore a exp claim with a invalid value'
+);
+
+
+SELECT
+  results_eq(
+    $$SELECT valid
+    FROM verify(sign(json_build_object('nbf', EXTRACT (EPOCH FROM CURRENT_TIMESTAMP) + 1), 'secret', 'HS512'), 'secret', 'HS512')$$,
+    $$VALUES (false)$$,
+    'verify() should not verify a jwt checked before its nbf claim'
+);
+
+
+SELECT
+  results_eq(
+    $$SELECT valid
+    FROM verify(sign(json_build_object('nbf', EXTRACT (EPOCH FROM CURRENT_TIMESTAMP) - 1), 'secret', 'HS512'), 'secret', 'HS512')$$,
+    $$VALUES (true)$$,
+    'verify() should verify a jwt checked after its nbf claim'
+);
+
+
+SELECT
+  results_eq(
+    $$SELECT valid
+    FROM verify(sign(json_build_object('exp', EXTRACT (EPOCH FROM CURRENT_TIMESTAMP) - 1), 'secret', 'HS512'), 'secret', 'HS512')$$,
+    $$VALUES (false)$$,
+    'verify() should not verify a jwt checked after its exp claim'
+);
+
+
+SELECT
+  results_eq(
+    $$SELECT valid
+    FROM verify(sign(json_build_object('exp', EXTRACT (EPOCH FROM CURRENT_TIMESTAMP) + 1), 'secret', 'HS512'), 'secret', 'HS512')$$,
+    $$VALUES (true)$$,
+    'verify() should verify a jwt checked before its exp claim'
+);
+
+
+
+SELECT
+  results_eq(
+    $$SELECT valid
+    FROM verify(sign(json_build_object('exp', EXTRACT (EPOCH FROM CURRENT_TIMESTAMP) + 1), 'secret', 'HS512'), 'secret', 'HS512')$$,
+    $$VALUES (true)$$,
+    'verify() should verify a jwt checked before its exp claim'
+);
+
+SELECT
+  results_eq(
+    $$SELECT valid
+    FROM verify(sign(
+      json_build_object(
+        'nbf', EXTRACT (EPOCH FROM CURRENT_TIMESTAMP) - 3,
+        'exp', EXTRACT (EPOCH FROM CURRENT_TIMESTAMP) - 1
+      ),
+      'secret', 'HS512'), 'secret', 'HS512')$$,
+    $$VALUES (false)$$,
+    'verify() should not verify a jwt checked outside of its claimed nbf-exp range'
+);
+
+
+SELECT
+  results_eq(
+    $$SELECT valid
+    FROM verify(
+      sign(
+        json_build_object(
+          'nbf', EXTRACT (EPOCH FROM CURRENT_TIMESTAMP) - 3,
+          'exp', EXTRACT (EPOCH FROM CURRENT_TIMESTAMP) + 3
+        ),
+        'secret', 'HS512'
+      ),
+      'secret', 'HS512')$$,
+    $$VALUES (true)$$,
+    'verify() should verify a jwt checked within its claimed nbf-exp range'
 );
 
 
