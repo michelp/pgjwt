@@ -16,8 +16,8 @@ RETURNS table(header json, payload json, valid boolean) LANGUAGE sql AS $$
     jwt.header AS header,
     jwt.payload AS payload,
     jwt.signature_ok AND tstzrange(
-      to_timestamp(try_cast_double(jwt.payload->>'nbf')),
-      to_timestamp(try_cast_double(jwt.payload->>'exp'))
+      to_timestamp(@extschema@.try_cast_double(jwt.payload->>'nbf')),
+      to_timestamp(@extschema@.try_cast_double(jwt.payload->>'exp'))
     ) @> CURRENT_TIMESTAMP AS valid
   FROM (
     SELECT
